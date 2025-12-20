@@ -32,10 +32,10 @@ wkt() {
 
   git worktree add "$dest" -b "wkt-$name" main
 
-  if [[ -x "$dest/tools/setup_worktree.sh" ]]; then
-    (cd "$dest" && WKT_CANONICAL_ROOT="$canonical" tools/setup_worktree.sh)
+  if [[ -x "$HOME/.local/bin/setup_worktree.sh" ]]; then
+    (cd "$dest" && WKT_CANONICAL_ROOT="$canonical" "$HOME/.local/bin/setup_worktree.sh")
   else
-    echo "warning: $dest/tools/setup_worktree.sh not found or not executable" >&2
+    echo "warning: ~/.local/bin/setup_worktree.sh not found or not executable" >&2
   fi
 
   cd "$dest"

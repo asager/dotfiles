@@ -11,8 +11,8 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKTREE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# When called from wkt(), we're already cd'd into the worktree
+WORKTREE_ROOT="$(pwd)"
 CANONICAL_ROOT="${WKT_CANONICAL_ROOT:-}"
 
 if [[ -z "$CANONICAL_ROOT" ]]; then
@@ -23,13 +23,11 @@ fi
 echo "Setting up worktree: $WORKTREE_ROOT"
 echo "Canonical root: $CANONICAL_ROOT"
 
-# 1. Clone large assets
-if [[ -x "$SCRIPT_DIR/clone_assets.sh" ]]; then
+# 1. Clone large assets (repo-specific script, if present)
+if [[ -x "$WORKTREE_ROOT/tools/clone_assets.sh" ]]; then
     echo ""
     echo "==> Cloning assets..."
-    "$SCRIPT_DIR/clone_assets.sh"
-else
-    echo "warning: clone_assets.sh not found or not executable" >&2
+    "$WORKTREE_ROOT/tools/clone_assets.sh"
 fi
 
 # 2. Clone .venv (CoW copy for worktree isolation)
