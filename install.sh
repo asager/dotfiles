@@ -7,14 +7,14 @@ set -e
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
-# Files to symlink: source (relative to DOTFILES_DIR) -> target (relative to HOME)
-declare -A FILES=(
-    ["zshrc"]=".zshrc"
-    ["gitconfig"]=".gitconfig"
-    ["config/ghostty/config"]=".config/ghostty/config"
-    ["config/rclone/rclone.conf"]=".config/rclone/rclone.conf"
-    ["tools/setup_worktree.sh"]=".local/bin/setup_worktree.sh"
-    ["tools/test_wkt_rm.sh"]=".local/bin/test_wkt_rm.sh"
+# Files to symlink: "source|target" (source relative to DOTFILES_DIR, target relative to HOME)
+FILES=(
+    "zshrc|.zshrc"
+    "gitconfig|.gitconfig"
+    "config/ghostty/config|.config/ghostty/config"
+    "config/rclone/rclone.conf|.config/rclone/rclone.conf"
+    "tools/setup_worktree.sh|.local/bin/setup_worktree.sh"
+    "tools/test_wkt_rm.sh|.local/bin/test_wkt_rm.sh"
 )
 
 backup_and_link() {
@@ -47,8 +47,10 @@ backup_and_link() {
 echo "Installing dotfiles from $DOTFILES_DIR"
 echo ""
 
-for src in "${!FILES[@]}"; do
-    backup_and_link "$src" "${FILES[$src]}"
+for entry in "${FILES[@]}"; do
+    src="${entry%%|*}"
+    dest="${entry##*|}"
+    backup_and_link "$src" "$dest"
 done
 
 echo ""
