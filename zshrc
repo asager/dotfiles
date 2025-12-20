@@ -92,9 +92,23 @@ wkt-rm() {
     abs_worktree="$(cd "$(dirname "$worktree")" 2>/dev/null && pwd)/$(basename "$worktree")"
   fi
 
-  # Check if branch is merged to main
-  if ! git branch --merged main 2>/dev/null | grep -q "$branch"; then
-    echo "warning: $branch is not merged to main" >&2
+  # Check if worktree is clean (no diffs, no untracked files)
+  local is_clean=false
+  if git -C "$abs_worktree" diff --quiet 2>/dev/null && \
+     git -C "$abs_worktree" diff --cached --quiet 2>/dev/null && \
+     [[ -z "$(git -C "$abs_worktree" ls-files --others --exclude-standard 2>/dev/null)" ]]; then
+    is_clean=true
+  fi
+
+  if [[ "$is_clean" == "false" ]]; then
+    # Worktree has uncommitted changes or untracked files
+    echo "warning: worktree has uncommitted changes or untracked files" >&2
+    git -C "$abs_worktree" status --short >&2
+    read -p "Remove anyway? [y/N] " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || return 1
+  elif ! git branch --merged main 2>/dev/null | grep -q "$branch"; then
+    # Clean but has unmerged commits
+    echo "warning: $branch has commits not merged to main" >&2
     read -p "Remove anyway? [y/N] " confirm
     [[ "$confirm" =~ ^[Yy]$ ]] || return 1
   fi
