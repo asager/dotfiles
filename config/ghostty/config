@@ -1,0 +1,2 @@
+# Fix Shift+Enter to insert newline (instead of sending escape sequence)
+keybind = shift+enter=text:\n

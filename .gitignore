@@ -1,0 +1,5 @@
+# Machine-specific overrides
+*.local
+
+# OS files
+.DS_Store
