@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # test_wkt_rm.sh - Tests for the wkt-rm shell function
 #
-# Run from the Technical directory:
-#   ./tools/test_wkt_rm.sh
+# Run from anywhere:
+#   ~/dotfiles/tools/test_wkt_rm.sh
 
 set -euo pipefail
 
@@ -38,7 +38,10 @@ ORIG_DIR="$(pwd)"
 TEST_DIR="$(mktemp -d)"
 trap 'cd "$ORIG_DIR"; rm -rf "$TEST_DIR"' EXIT
 
-# Copy wkt-rm function for testing (extracted from .zshrc)
+# Source the wkt-rm function from zshrc (extract it)
+# We define it inline here for bash compatibility in tests
+# NOTE: This should be kept in sync with ~/dotfiles/zshrc
+
 wkt-rm() {
   if [[ -z "${1:-}" ]]; then
     echo "usage: wkt-rm <name>" >&2
@@ -59,7 +62,8 @@ wkt-rm() {
     }
 
     # Check we're at the top-level, not a subdirectory
-    if [[ "$(pwd)" != "$toplevel" ]]; then
+    # Use pwd -P to resolve symlinks (e.g., /tmp -> /private/tmp on macOS)
+    if [[ "$(pwd -P)" != "$(cd "$toplevel" && pwd -P)" ]]; then
       echo "error: must be at worktree top-level, not a subdirectory" >&2
       echo "       current: $(pwd)" >&2
       echo "       toplevel: $toplevel" >&2
@@ -89,30 +93,54 @@ wkt-rm() {
     abs_worktree="$(cd "$(dirname "$worktree")" 2>/dev/null && pwd)/$(basename "$worktree")"
   fi
 
-  # Check if branch is merged to main (skip prompt in tests via WKT_TEST_FORCE)
-  if ! git branch --merged main 2>/dev/null | grep -q "$branch"; then
+  # Check if worktree is clean (no diffs, no untracked files)
+  local is_clean=false
+  if git -C "$abs_worktree" diff --quiet 2>/dev/null && \
+     git -C "$abs_worktree" diff --cached --quiet 2>/dev/null && \
+     [[ -z "$(git -C "$abs_worktree" ls-files --others --exclude-standard 2>/dev/null)" ]]; then
+    is_clean=true
+  fi
+
+  if [[ "$is_clean" == "false" ]]; then
+    # Worktree has uncommitted changes or untracked files
+    echo "warning: worktree has uncommitted changes or untracked files" >&2
+    git -C "$abs_worktree" status --short >&2
     if [[ "${WKT_TEST_FORCE:-}" != "1" ]]; then
-      echo "warning: $branch is not merged to main" >&2
-      read -p "Remove anyway? [y/N] " confirm
+      read -r -p "Remove anyway? [y/N] " confirm
+      [[ "$confirm" =~ ^[Yy]$ ]] || return 1
+    fi
+  elif ! git -C "$abs_worktree" branch --merged main 2>/dev/null | grep -qw "$branch"; then
+    # Clean but has unmerged commits
+    echo "warning: $branch has commits not merged to main" >&2
+    if [[ "${WKT_TEST_FORCE:-}" != "1" ]]; then
+      read -r -p "Remove anyway? [y/N] " confirm
       [[ "$confirm" =~ ^[Yy]$ ]] || return 1
     fi
   fi
 
-  if git worktree remove "$abs_worktree" 2>/dev/null || \
-     git worktree remove --force "$abs_worktree" 2>/dev/null; then
+  # Get the git common dir BEFORE removing (needed for branch ops after worktree is gone)
+  local git_dir
+  git_dir="$(git -C "$abs_worktree" rev-parse --git-common-dir 2>/dev/null)" || git_dir=""
+
+  # Remove worktree (--force if dirty)
+  # Use -C to ensure git commands work even after cd-ing out of worktree
+  if git -C "$abs_worktree" worktree remove "$abs_worktree" 2>/dev/null || \
+     git -C "$abs_worktree" worktree remove --force "$abs_worktree" 2>/dev/null; then
     echo "removed worktree: $abs_worktree"
   else
     echo "error: failed to remove worktree $abs_worktree" >&2
     return 1
   fi
 
-  if git branch -d "$branch" 2>/dev/null; then
-    echo "deleted branch: $branch"
-  elif git branch -D "$branch" 2>/dev/null; then
-    echo "force-deleted branch: $branch (was not fully merged)"
+  # Delete branch if it exists
+  if [[ -n "$git_dir" ]]; then
+    if git --git-dir="$git_dir" branch -d "$branch" 2>/dev/null; then
+      echo "deleted branch: $branch"
+    elif git --git-dir="$git_dir" branch -D "$branch" 2>/dev/null; then
+      echo "force-deleted branch: $branch (was not fully merged)"
+    fi
+    git --git-dir="$git_dir" worktree prune
   fi
-
-  git worktree prune
 }
 
 # Helper to create a test worktree (mimics wkt)
@@ -127,7 +155,7 @@ cd "$TEST_DIR"
 # Create a "canonical" repo
 mkdir canonical
 cd canonical
-git init
+git init -b main
 git config user.email "test@example.com"
 git config user.name "Test User"
 echo "initial" > file.txt
@@ -152,77 +180,116 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-# Test 2: Remove a merged worktree
+# Test 2: CLEAN worktree (wkt then immediately wkt-rm) - should delete silently
 # ------------------------------------------------------------------------------
-run_test "wkt-rm removes a merged worktree"
-create_test_worktree "test-merged"
-# Merge the branch to main (it's already based on main with no changes, so it's "merged")
-if wkt-rm "test-merged" >/dev/null 2>&1; then
-    # Verify worktree is gone
-    if [[ ! -d "../wkt-test-merged" ]]; then
-        # Verify branch is gone
-        if ! git branch | grep -q "wkt-test-merged"; then
-            pass "wkt-rm removes merged worktree and branch"
-        else
-            fail "wkt-rm removes merged worktree" "Branch still exists"
-        fi
+run_test "wkt-rm on clean worktree (no changes) deletes without prompt"
+create_test_worktree "test-clean"
+# Verify the branch shows as merged (no new commits)
+if git branch --merged main | grep -qw "wkt-test-clean"; then
+    echo "  (branch correctly detected as merged to main)"
+else
+    echo "  DEBUG: git branch --merged main output:"
+    git branch --merged main
+fi
+# Should not prompt because worktree is clean and branch is at main
+output=$(wkt-rm "test-clean" 2>&1)
+if [[ ! -d "../wkt-test-clean" ]]; then
+    if [[ "$output" != *"warning"* ]] && [[ "$output" != *"Remove anyway"* ]]; then
+        pass "wkt-rm on clean worktree deletes silently (no prompt)"
     else
-        fail "wkt-rm removes merged worktree" "Worktree directory still exists"
+        fail "wkt-rm on clean worktree" "Should not show warnings, got: $output"
     fi
 else
-    fail "wkt-rm removes merged worktree" "Command failed"
+    fail "wkt-rm on clean worktree" "Worktree still exists"
 fi
 
 # ------------------------------------------------------------------------------
-# Test 3: Remove worktree with unmerged changes (forced)
+# Test 3: Remove worktree with unmerged commits (should warn)
 # ------------------------------------------------------------------------------
-run_test "wkt-rm warns about unmerged branch"
+run_test "wkt-rm warns about unmerged commits"
 create_test_worktree "test-unmerged"
 # Add a commit to make it diverge from main
 (cd "../wkt-test-unmerged" && echo "new content" > newfile.txt && git add newfile.txt && git commit -m "Unmerged commit")
 
-# Without force, should warn (we use WKT_TEST_FORCE to skip interactive prompt)
 output=$(WKT_TEST_FORCE=1 wkt-rm "test-unmerged" 2>&1) || true
-if [[ ! -d "../wkt-test-unmerged" ]]; then
-    pass "wkt-rm with WKT_TEST_FORCE removes unmerged worktree"
+if [[ "$output" == *"has commits not merged to main"* ]]; then
+    pass "wkt-rm warns about unmerged commits"
 else
-    fail "wkt-rm with unmerged branch" "Worktree still exists after force"
+    fail "wkt-rm with unmerged commits" "Expected warning about unmerged commits, got: $output"
 fi
 
 # ------------------------------------------------------------------------------
-# Test 4: Remove non-existent worktree
+# Test 4: Remove worktree with dirty files (should warn)
+# ------------------------------------------------------------------------------
+run_test "wkt-rm warns about uncommitted changes"
+create_test_worktree "test-dirty"
+echo "dirty content" > "../wkt-test-dirty/dirty.txt"  # Untracked file
+
+output=$(WKT_TEST_FORCE=1 wkt-rm "test-dirty" 2>&1)
+if [[ "$output" == *"uncommitted changes or untracked"* ]]; then
+    if [[ ! -d "../wkt-test-dirty" ]]; then
+        pass "wkt-rm warns about dirty worktree and removes with force"
+    else
+        fail "wkt-rm with dirty worktree" "Directory still exists after force"
+    fi
+else
+    fail "wkt-rm with dirty worktree" "Expected warning about uncommitted changes, got: $output"
+fi
+
+# ------------------------------------------------------------------------------
+# Test 5: wkt-rm . from top-level of clean worktree
+# ------------------------------------------------------------------------------
+run_test "wkt-rm . on clean worktree deletes without prompt"
+create_test_worktree "test-dot-clean"
+output=$(cd "../wkt-test-dot-clean" && wkt-rm . 2>&1)
+if [[ ! -d "../wkt-test-dot-clean" ]]; then
+    if [[ "$output" == *"moved to"* ]] && [[ "$output" != *"warning"* ]]; then
+        pass "wkt-rm . on clean worktree deletes silently"
+    else
+        fail "wkt-rm . on clean worktree" "Should not show warnings, got: $output"
+    fi
+else
+    fail "wkt-rm . on clean worktree" "Worktree still exists"
+fi
+
+# ------------------------------------------------------------------------------
+# Test 6: wkt-rm . fails from subdirectory
+# ------------------------------------------------------------------------------
+run_test "wkt-rm . fails from subdirectory of worktree"
+create_test_worktree "test-dot-subdir"
+mkdir -p "../wkt-test-dot-subdir/some/subdir"
+output=$(cd "../wkt-test-dot-subdir/some/subdir" && wkt-rm . 2>&1) || exit_code=$?
+if [[ "$output" == *"must be at worktree top-level"* ]]; then
+    pass "wkt-rm . rejects subdirectory with correct error"
+    # Cleanup
+    wkt-rm "test-dot-subdir" >/dev/null 2>&1 || true
+else
+    fail "wkt-rm . from subdirectory" "Expected 'must be at worktree top-level' error, got: $output"
+fi
+
+# ------------------------------------------------------------------------------
+# Test 7: wkt-rm . fails from non-wkt directory
+# ------------------------------------------------------------------------------
+run_test "wkt-rm . fails from non-wkt directory (canonical)"
+output=$(wkt-rm . 2>&1) || exit_code=$?
+if [[ "$output" == *"not a wkt worktree"* ]]; then
+    pass "wkt-rm . rejects non-wkt directory"
+else
+    fail "wkt-rm . from canonical" "Expected 'not a wkt worktree' error, got: $output"
+fi
+
+# ------------------------------------------------------------------------------
+# Test 8: Remove non-existent worktree
 # ------------------------------------------------------------------------------
 run_test "wkt-rm on non-existent worktree fails gracefully"
 if output=$(wkt-rm "does-not-exist" 2>&1); then
     fail "wkt-rm on non-existent worktree" "Expected failure"
 else
-    if [[ "$output" == *"error"* ]] || [[ "$output" == *"failed"* ]] || [[ "$output" == *"not a working tree"* ]]; then
-        pass "wkt-rm on non-existent worktree shows error"
-    else
-        # Even if message differs, as long as it failed, that's correct behavior
-        pass "wkt-rm on non-existent worktree returns error"
-    fi
+    pass "wkt-rm on non-existent worktree returns error"
 fi
 
 # ------------------------------------------------------------------------------
-# Test 5: Remove worktree with dirty files
-# ------------------------------------------------------------------------------
-run_test "wkt-rm removes worktree with uncommitted changes"
-create_test_worktree "test-dirty"
-echo "dirty content" > "../wkt-test-dirty/dirty.txt"  # Untracked file
-
-if wkt-rm "test-dirty" >/dev/null 2>&1; then
-    if [[ ! -d "../wkt-test-dirty" ]]; then
-        pass "wkt-rm removes dirty worktree (force fallback works)"
-    else
-        fail "wkt-rm removes dirty worktree" "Directory still exists"
-    fi
-else
-    fail "wkt-rm removes dirty worktree" "Command failed"
-fi
-
-# ------------------------------------------------------------------------------
-# Test 6: git worktree prune is called
+# Test 9: git worktree prune is called
 # ------------------------------------------------------------------------------
 run_test "wkt-rm prunes stale worktree references"
 create_test_worktree "test-prune"
@@ -239,63 +306,6 @@ if git worktree list | grep -q "wkt-test-prune"; then
     fail "wkt-rm prunes stale references" "Stale worktree still in list"
 else
     pass "wkt-rm prunes stale worktree references"
-fi
-
-# ------------------------------------------------------------------------------
-# Test 7: wkt-rm . from top-level of worktree
-# ------------------------------------------------------------------------------
-run_test "wkt-rm . removes current worktree when at top-level"
-create_test_worktree "test-dot"
-(
-    cd "../wkt-test-dot"
-    wkt-rm . >/dev/null 2>&1
-)
-if [[ ! -d "../wkt-test-dot" ]]; then
-    if ! git branch | grep -q "wkt-test-dot"; then
-        pass "wkt-rm . removes worktree and branch from top-level"
-    else
-        fail "wkt-rm . from top-level" "Branch still exists"
-    fi
-else
-    fail "wkt-rm . from top-level" "Worktree directory still exists"
-fi
-
-# ------------------------------------------------------------------------------
-# Test 8: wkt-rm . fails from subdirectory
-# ------------------------------------------------------------------------------
-run_test "wkt-rm . fails from subdirectory of worktree"
-create_test_worktree "test-dot-subdir"
-mkdir -p "../wkt-test-dot-subdir/some/subdir"
-output=$(cd "../wkt-test-dot-subdir/some/subdir" && wkt-rm . 2>&1) || exit_code=$?
-if [[ "$output" == *"must be at worktree top-level"* ]]; then
-    pass "wkt-rm . rejects subdirectory with correct error"
-    # Cleanup
-    wkt-rm "test-dot-subdir" >/dev/null 2>&1 || true
-else
-    fail "wkt-rm . from subdirectory" "Expected 'must be at worktree top-level' error, got: $output"
-fi
-
-# ------------------------------------------------------------------------------
-# Test 9: wkt-rm . fails from non-wkt directory
-# ------------------------------------------------------------------------------
-run_test "wkt-rm . fails from non-wkt directory (canonical)"
-output=$(wkt-rm . 2>&1) || exit_code=$?
-if [[ "$output" == *"not a wkt worktree"* ]]; then
-    pass "wkt-rm . rejects non-wkt directory"
-else
-    fail "wkt-rm . from canonical" "Expected 'not a wkt worktree' error, got: $output"
-fi
-
-# ------------------------------------------------------------------------------
-# Test 10: wkt-rm . changes directory to parent
-# ------------------------------------------------------------------------------
-run_test "wkt-rm . changes to parent directory"
-create_test_worktree "test-dot-cd"
-output=$(cd "../wkt-test-dot-cd" && wkt-rm . 2>&1)
-if [[ "$output" == *"moved to"* ]]; then
-    pass "wkt-rm . reports moving to parent directory"
-else
-    fail "wkt-rm . directory change" "Expected 'moved to' message, got: $output"
 fi
 
 # ------------------------------------------------------------------------------

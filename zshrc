@@ -62,7 +62,8 @@ wkt-rm() {
     }
 
     # Check we're at the top-level, not a subdirectory
-    if [[ "$(pwd)" != "$toplevel" ]]; then
+    # Use pwd -P to resolve symlinks (e.g., /tmp -> /private/tmp on macOS)
+    if [[ "$(pwd -P)" != "$(cd "$toplevel" && pwd -P)" ]]; then
       echo "error: must be at worktree top-level, not a subdirectory" >&2
       echo "       current: $(pwd)" >&2
       echo "       toplevel: $toplevel" >&2
@@ -104,18 +105,23 @@ wkt-rm() {
     # Worktree has uncommitted changes or untracked files
     echo "warning: worktree has uncommitted changes or untracked files" >&2
     git -C "$abs_worktree" status --short >&2
-    read -p "Remove anyway? [y/N] " confirm
+    read "confirm?Remove anyway? [y/N] "
     [[ "$confirm" =~ ^[Yy]$ ]] || return 1
-  elif ! git branch --merged main 2>/dev/null | grep -q "$branch"; then
+  elif ! git -C "$abs_worktree" branch --merged main 2>/dev/null | grep -qw "$branch"; then
     # Clean but has unmerged commits
     echo "warning: $branch has commits not merged to main" >&2
-    read -p "Remove anyway? [y/N] " confirm
+    read "confirm?Remove anyway? [y/N] "
     [[ "$confirm" =~ ^[Yy]$ ]] || return 1
   fi
 
+  # Get the git common dir BEFORE removing (needed for branch ops after worktree is gone)
+  local git_dir
+  git_dir="$(git -C "$abs_worktree" rev-parse --git-common-dir 2>/dev/null)" || git_dir=""
+
   # Remove worktree (--force if dirty)
-  if git worktree remove "$abs_worktree" 2>/dev/null || \
-     git worktree remove --force "$abs_worktree" 2>/dev/null; then
+  # Use -C to ensure git commands work even after cd-ing out of worktree
+  if git -C "$abs_worktree" worktree remove "$abs_worktree" 2>/dev/null || \
+     git -C "$abs_worktree" worktree remove --force "$abs_worktree" 2>/dev/null; then
     echo "removed worktree: $abs_worktree"
   else
     echo "error: failed to remove worktree $abs_worktree" >&2
@@ -123,12 +129,12 @@ wkt-rm() {
   fi
 
   # Delete branch if it exists
-  if git branch -d "$branch" 2>/dev/null; then
-    echo "deleted branch: $branch"
-  elif git branch -D "$branch" 2>/dev/null; then
-    echo "force-deleted branch: $branch (was not fully merged)"
+  if [[ -n "$git_dir" ]]; then
+    if git --git-dir="$git_dir" branch -d "$branch" 2>/dev/null; then
+      echo "deleted branch: $branch"
+    elif git --git-dir="$git_dir" branch -D "$branch" 2>/dev/null; then
+      echo "force-deleted branch: $branch (was not fully merged)"
+    fi
+    git --git-dir="$git_dir" worktree prune
   fi
-
-  # Prune stale worktree references
-  git worktree prune
 }
