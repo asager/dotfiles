@@ -19,7 +19,34 @@ export SPICE_SCRIPTS=/opt/homebrew/share/ngspice/scripts
 
 # Git worktree shortcut: wkt <name> creates ../wkt-<name> with branch wkt-<name> based on main
 wkt() {
-  if [[ -z "${1:-}" ]]; then
+  local name=""
+  local has_custom_path=0
+  local i=1
+  local arg
+  while [[ $i -le $# ]]; do
+    arg="${@[$i]}"
+    case "$arg" in
+      --canonical|--parent|--path)
+        has_custom_path=1
+        i=$((i + 1))
+        ;;
+      --canonical=*|--parent=*|--path=*)
+        has_custom_path=1
+        ;;
+      --no-assets|--no-venv|--no-node|--dry-run|--force|-h|--help)
+        ;;
+      -*)
+        ;;
+      *)
+        if [[ -z "$name" ]]; then
+          name="$arg"
+        fi
+        ;;
+    esac
+    i=$((i + 1))
+  done
+
+  if [[ -z "$name" ]]; then
     echo "usage: wkt <name>" >&2
     return 2
   fi
@@ -27,7 +54,29 @@ wkt() {
   local canonical
   canonical="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
 
-  local name="$1"
+  local repo_wkt="$canonical/tools/wkt"
+  if [[ -x "$repo_wkt" ]]; then
+    "$repo_wkt" "$@"
+    local rc=$?
+    if [[ $rc -ne 0 ]]; then
+      return $rc
+    fi
+    if [[ "$has_custom_path" -eq 0 ]]; then
+      local parent
+      local dest
+      parent="$(dirname "$canonical")"
+      if [[ "$name" == wkt-* ]]; then
+        dest="$parent/$name"
+      else
+        dest="$parent/wkt-$name"
+      fi
+      if [[ -d "$dest" ]]; then
+        cd "$dest" || return 1
+      fi
+    fi
+    return 0
+  fi
+
   local dest="../wkt-$name"
 
   git worktree add "$dest" -b "wkt-$name" main
@@ -47,6 +96,14 @@ wkt-rm() {
     echo "usage: wkt-rm <name>" >&2
     echo "       wkt-rm .       (from top-level of a wkt)" >&2
     return 2
+  fi
+
+  local canonical
+  canonical="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
+  local repo_wkt_rm="$canonical/tools/wkt-rm"
+  if [[ -x "$repo_wkt_rm" ]]; then
+    "$repo_wkt_rm" "$@"
+    return $?
   fi
 
   local name="$1"
