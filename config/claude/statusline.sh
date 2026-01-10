@@ -126,6 +126,16 @@ QUOTES=(
     "I was talking aloud to myself. A habit of the old: they choose the wisest person present to speak to."
     "Good things that are good to have and days that are good to spend are soon told about, and not much to listen to."
     "That we should try to destroy the Ring itself has not yet entered into his darkest dream."
+
+    # Roadside Picnic (Strugatsky Brothers, 1972)
+    # Sourced via web search of Goodreads, BookQuoters, SuperSummary quote collections
+    # Selected for philosophical density and ≤140 char length
+    "We will make Good from Evil because there is nothing else to make it from."
+    "A hypothesis of God gives an incomparably absolute opportunity to understand everything and know absolutely nothing."
+    "Intelligence is the ability of a living creature to perform pointless or unnatural acts."
+    "Reason is a complex type of instinct that has not yet formed completely."
+    "The violation of the laws of causality is much scarier than ghosts or vampires."
+    "We don't notice the moment change comes—we search for it in all the wrong places."
 )
 
 QUOTE_CACHE="/tmp/claude_lotr_quote"
