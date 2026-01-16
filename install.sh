@@ -16,6 +16,9 @@ FILES=(
     "tools/setup_worktree.sh|.local/bin/setup_worktree.sh"
     "tools/test_wkt_rm.sh|.local/bin/test_wkt_rm.sh"
     "config/claude/statusline.sh|.claude/statusline.sh"
+    "config/claude/CLAUDE.md|.claude/CLAUDE.md"
+    "config/codex/AGENTS.md|.codex/AGENTS.md"
+    "config/gemini/GEMINI.md|.gemini/GEMINI.md"
     "config/git/ignore|.config/git/ignore"
 )
 
