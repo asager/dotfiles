@@ -16,6 +16,7 @@ FILES=(
     "tools/setup_worktree.sh|.local/bin/setup_worktree.sh"
     "tools/test_wkt_rm.sh|.local/bin/test_wkt_rm.sh"
     "config/claude/statusline.sh|.claude/statusline.sh"
+    "config/git/ignore|.config/git/ignore"
 )
 
 backup_and_link() {
