@@ -19,4 +19,8 @@
 - `tools/worktree_sync_manifest.yaml` - Files to sync between worktrees
 
 For full docs: `~/Code/wkt/README.md`
+
+## Printing
+
+To print a file to the network printer, use `lpr <file>` (the default printer is Brother_HL_L2405W).
 </INSTRUCTIONS>

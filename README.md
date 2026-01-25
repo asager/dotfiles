@@ -4,10 +4,25 @@ Personal dotfiles for macOS.
 
 ## Contents
 
-- `zshrc` - Zsh configuration (aliases, functions, PATH)
+- `zshrc` - Zsh configuration (aliases, PATH, wkt helpers, OpenCode helpers)
+- `zprofile` - Login shell setup (Homebrew + Python PATH)
 - `gitconfig` - Git user settings and aliases
-- `config/ghostty/config` - Ghostty terminal configuration
+- `config/git/ignore` - Global gitignore (intended for `core.excludesfile`)
+- `config/gh/config.yml` - GitHub CLI config (non-secret)
 - `config/rclone/rclone.conf` - rclone remote aliases
+
+- `config/claude/*` - Claude Code instructions + statusline
+- `config/codex/*` - Codex instructions + config
+- `config/gemini/*` - Gemini instructions + settings
+
+- `config/opencode/*` - OpenCode config (status bar + plugin deps)
+- `opencode.json` - OpenCode workspace permissions (symlinked to `~/Code/opencode.json`)
+
+- `config/wkt/config.yaml` - wkt global config
+- `config/launchagents/*` - launchd LaunchAgents for local automation
+
+- `tools/*` - utility scripts (installed to `~/.local/bin` and `~/bin`)
+- `Brewfile` - optional `brew bundle` snapshot of core tooling
 
 ## Installation
 
@@ -22,6 +37,13 @@ cd ~/dotfiles
 The install script will:
 1. Back up any existing dotfiles to `~/.dotfiles_backup/<timestamp>/`
 2. Create symlinks from your home directory to this repo
+
+## Post-install
+
+- Install core brew deps (optional): `brew bundle --file ~/dotfiles/Brewfile`
+- Clone your core repos (optional): `bootstrap-repos`
+- Install OpenCode plugin deps: `setup-opencode`
+- (Re)deploy Everything MenuBarHelper: `deploy-menubarhelper`
 
 ## Adding New Dotfiles
 

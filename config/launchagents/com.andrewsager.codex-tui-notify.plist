@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.andrewsager.codex-tui-notify</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/bin/python3</string>
+      <string>/Users/andrewsager/Code/codex-tui-notify/src/codex_tui_notify.py</string>
+      <string>--mode</string>
+      <string>active</string>
+      <string>--threshold-seconds</string>
+      <string>10</string>
+      <string>--scan-seconds</string>
+      <string>1.0</string>
+      <string>--backend</string>
+      <string>osascript</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/codex-tui-notify.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/codex-tui-notify.err.log</string>
+  </dict>
+</plist>

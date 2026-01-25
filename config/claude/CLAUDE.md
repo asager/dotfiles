@@ -8,7 +8,7 @@
 
 For OCR tasks on PDFs, use the Azure Document Intelligence approach:
 
-- **Script location:** `~/Code/azure-ocr/azure_ocr.py` (also available as `~/bin/azure_ocr`)
+- **Script location:** `~/dotfiles/tools/azure_ocr.py` (also available as `~/bin/azure_ocr`)
 - **Requirements:** `azure-ai-documentintelligence` package
 - **Environment variables required:**
   - `AZURE_DOC_INTELLIGENCE_ENDPOINT`
@@ -49,3 +49,7 @@ azure_ocr document.pdf --layout --output result.md
 - `tools/worktree_sync_manifest.yaml` - Files to sync between worktrees
 
 For full docs: `~/Code/wkt/README.md`
+
+## Printing
+
+To print a file to the network printer, use `lpr <file>` (the default printer is Brother_HL_L2405W).

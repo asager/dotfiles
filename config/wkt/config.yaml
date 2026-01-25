@@ -1,0 +1,11 @@
+# WKT global configuration
+# See ~/Code/wkt/docs/README.md for documentation
+
+defaults:
+  worktree_parent: ~/Documents/Aeglos
+
+repos:
+  Technical:
+    canonical_root: /Users/andrewsager/Documents/Aeglos/Technical
+  Corporate:
+    canonical_root: /Users/andrewsager/Documents/Aeglos/Corporate

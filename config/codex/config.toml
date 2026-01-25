@@ -1,0 +1,89 @@
+model = "gpt-5.2"
+model_verbosity = "medium"
+model_reasoning_effort = "xhigh"
+[projects."/Users/andrewsager/Documents/Aeglos/Technical"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Documents/Aeglos"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/imessage_sql"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/interesting_words"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/colors"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/interview"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/decibels"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Downloads/sdrsharp-x86"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/sts_utlity_EV"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/dev_env_config"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Documents/Aeglos/Corporate"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/hayabusa"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/hayabusa_c"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Documents/Aeglos/RejectionStrategy"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/ny_state_2020_audit"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/standard_properties"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Documents/Aeglos/ExaminerInterview_FinalOA_2025-11-19"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/remote_ai_video_gen"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/codex-backup/backups"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/codex-backup"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/wildfires"]
+trust_level = "trusted"
+
+[projects."/Users/andrewsager/Code/wkt"]
+trust_level = "trusted"
+
+[features]
+web_search_request = true
+unified_exec = true
+shell_snapshot = true
+steer = true
+
+[notice]
+hide_gpt5_1_migration_prompt = true
+"hide_gpt-5.1-codex-max_migration_prompt" = true
+hide_rate_limit_model_nudge = true
+
+[notice.model_migrations]
+"gpt-5.2" = "gpt-5.2-codex"
+"gpt-5.1-codex-max" = "gpt-5.2-codex"

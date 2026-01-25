@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "tui": {
+    "status_bar": {
+      "enabled": true,
+      "show_worktree": true,
+      "show_weather": true,
+      "quotes_file": "~/.config/opencode/quotes.txt",
+      "quote_refresh_seconds": 25,
+      "quote_max_length": 72
+    }
+  }
+}

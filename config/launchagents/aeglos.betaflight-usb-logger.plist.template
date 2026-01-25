@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>aeglos.betaflight-usb-logger</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/Users/andrewsager/Documents/Aeglos/wkt-__WKT_NAME__/.venv/bin/python</string>
+      <string>/Users/andrewsager/Documents/Aeglos/wkt-__WKT_NAME__/tools/betaflight_usb_logger.py</string>
+      <string>--name</string>
+      <string>launchd</string>
+      <string>--log-stream</string>
+      <string>--snapshot-on-start</string>
+      <string>--lsof-on-change</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/andrewsager/Documents/Aeglos/wkt-__WKT_NAME__</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/andrewsager/Documents/Aeglos/wkt-__WKT_NAME__/tmp/betaflight_diag/launchd_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/andrewsager/Documents/Aeglos/wkt-__WKT_NAME__/tmp/betaflight_diag/launchd_stderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PYTHONUNBUFFERED</key>
+      <string>1</string>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+  </dict>
+</plist>
