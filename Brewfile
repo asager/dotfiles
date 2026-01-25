@@ -3,6 +3,9 @@ tap "homebrew/core"
 tap "homebrew/cask"
 tap "oven-sh/bun"
 
+# Install GUI apps into ~/Applications (avoids sudo prompts during `brew bundle`).
+cask_args appdir: "~/Applications"
+
 brew "oven-sh/bun/bun"
 brew "gh"
 brew "git"
