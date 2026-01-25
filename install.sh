@@ -229,18 +229,24 @@ apply_app_defaults() {
         return 0
     fi
 
-    local rectangle_plist="$DOTFILES_DIR/config/macos/rectangle-defaults.plist"
-    if [[ ! -f "$rectangle_plist" ]]; then
-        return 0
-    fi
-
     echo ""
     echo "Importing app defaults..."
 
     # Rectangle
-    defaults import com.knollsoft.Rectangle "$rectangle_plist" 2>/dev/null || true
-    killall Rectangle 2>/dev/null || true
-    open -ga "$HOME/Applications/Rectangle.app" 2>/dev/null || true
+    local rectangle_plist="$DOTFILES_DIR/config/macos/rectangle-defaults.plist"
+    if [[ -f "$rectangle_plist" ]]; then
+        defaults import com.knollsoft.Rectangle "$rectangle_plist" 2>/dev/null || true
+        killall Rectangle 2>/dev/null || true
+        open -ga "$HOME/Applications/Rectangle.app" 2>/dev/null || true
+    fi
+
+    # UnnaturalScrollWheels
+    local usw_plist="$DOTFILES_DIR/config/macos/unnatural-scroll-wheels.plist"
+    if [[ -f "$usw_plist" ]]; then
+        defaults import com.ther0n.UnnaturalScrollWheels "$usw_plist" 2>/dev/null || true
+        killall UnnaturalScrollWheels 2>/dev/null || true
+        open -ga "$HOME/Applications/UnnaturalScrollWheels.app" 2>/dev/null || true
+    fi
 }
 
 apply_app_defaults
