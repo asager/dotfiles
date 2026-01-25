@@ -144,9 +144,6 @@ run_brew_bundle() {
     echo ""
     echo "Installing brew dependencies from Brewfile..."
     brew update >/dev/null 2>&1 || true
-    brew tap homebrew/core >/dev/null 2>&1 || true
-    brew tap homebrew/cask >/dev/null 2>&1 || true
-    brew tap homebrew/bundle >/dev/null 2>&1 || true
     brew tap oven-sh/bun >/dev/null 2>&1 || true
     brew bundle --file "$DOTFILES_DIR/Brewfile"
 }
