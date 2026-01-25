@@ -71,6 +71,9 @@ FILES=(
     "config/opencode/bun.lock|.config/opencode/bun.lock"
     "config/launchagents/com.andrewsager.menubarhelper.plist|Library/LaunchAgents/com.andrewsager.menubarhelper.plist"
     "config/launchagents/com.andrewsager.codex-tui-notify.plist|Library/LaunchAgents/com.andrewsager.codex-tui-notify.plist"
+    "config/launchagents/com.andrewsager.alt-tab.plist|Library/LaunchAgents/com.andrewsager.alt-tab.plist"
+    "config/launchagents/com.andrewsager.rectangle.plist|Library/LaunchAgents/com.andrewsager.rectangle.plist"
+    "config/launchagents/com.andrewsager.unnaturalscrollwheels.plist|Library/LaunchAgents/com.andrewsager.unnaturalscrollwheels.plist"
     "opencode.json|Code/opencode.json"
 )
 
