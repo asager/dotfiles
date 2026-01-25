@@ -7,7 +7,7 @@ set -e
 
 usage() {
     cat <<'EOF'
-usage: ./install.sh [--skip-brew]
+usage: ./install.sh [--skip-brew] [--skip-launchagents]
 
 Creates symlinks into your home directory.
 
@@ -16,6 +16,7 @@ By default this also runs:
 
 Options:
   --skip-brew   Skip Homebrew bootstrap + Brewfile install
+  --skip-launchagents  Skip loading LaunchAgents after install
 EOF
 }
 
@@ -25,10 +26,24 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 SKIP_BREW=0
-if [[ "${1:-}" == "--skip-brew" ]]; then
-    SKIP_BREW=1
-    shift
-fi
+SKIP_LAUNCHAGENTS=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --skip-brew)
+            SKIP_BREW=1
+            shift
+            ;;
+        --skip-launchagents)
+            SKIP_LAUNCHAGENTS=1
+            shift
+            ;;
+        *)
+            echo "error: unknown argument: $1" >&2
+            usage
+            exit 2
+            ;;
+    esac
+done
 
 # If invoked via sudo, re-run as the original user.
 # Homebrew refuses to run as root, and we want dotfiles to land in the user's home.
@@ -151,6 +166,30 @@ run_brew_bundle() {
     brew bundle --file "$DOTFILES_DIR/Brewfile"
 }
 
+autoload_launchagents() {
+    if [[ "$SKIP_LAUNCHAGENTS" -eq 1 ]]; then
+        echo ""
+        echo "Skipping LaunchAgent load (--skip-launchagents)"
+        return 0
+    fi
+
+    local reload_bin="$HOME/.local/bin/launchagent-reload"
+    if [[ ! -x "$reload_bin" ]]; then
+        echo "warning: launchagent-reload not found at $reload_bin" >&2
+        return 0
+    fi
+
+    echo ""
+    echo "Loading LaunchAgents..."
+
+    # Best-effort: these may fail in non-GUI contexts (e.g., non-interactive SSH)
+    "$reload_bin" com.andrewsager.menubarhelper 2>/dev/null || true
+    "$reload_bin" com.andrewsager.codex-tui-notify 2>/dev/null || true
+    "$reload_bin" com.andrewsager.alt-tab 2>/dev/null || true
+    "$reload_bin" com.andrewsager.rectangle 2>/dev/null || true
+    "$reload_bin" com.andrewsager.unnaturalscrollwheels 2>/dev/null || true
+}
+
 echo "Installing dotfiles from $DOTFILES_DIR"
 echo ""
 
@@ -174,6 +213,8 @@ else
     echo ""
     echo "Skipping Homebrew bootstrap (--skip-brew)"
 fi
+
+autoload_launchagents
 
 echo ""
 echo "Done! Backups saved to: $BACKUP_DIR"

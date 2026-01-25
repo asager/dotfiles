@@ -38,6 +38,7 @@ The install script will:
 1. Back up any existing dotfiles to `~/.dotfiles_backup/<timestamp>/`
 2. Create symlinks from your home directory to this repo
 3. Install CLI+GUI tooling via `brew bundle` (unless `--skip-brew`)
+4. Load common LaunchAgents (unless `--skip-launchagents`)
 
 ## Post-install
 
