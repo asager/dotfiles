@@ -1,4 +1,4 @@
-export PS1='%30<...<%~%<<%# '
+# Prompt is set at end of file to avoid being overwritten by sourced scripts.
 alias pip='pip3'
 alias python='python3'
 alias py='python3'
@@ -83,3 +83,7 @@ ocd() { _oc_run 1 "$@"; }
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# prompt
+PROMPT='%30<...<%~%<<%# '
+PS1="$PROMPT"
