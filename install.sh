@@ -1,8 +1,44 @@
 #!/bin/bash
 # Dotfiles install script
 # Creates symlinks from home directory to dotfiles repo
+# Optionally bootstraps dev tooling via Homebrew.
 
 set -e
+
+usage() {
+    cat <<'EOF'
+usage: ./install.sh [--skip-brew]
+
+Creates symlinks into your home directory.
+
+By default this also runs:
+  brew bundle --file ~/dotfiles/Brewfile
+
+Options:
+  --skip-brew   Skip Homebrew bootstrap + Brewfile install
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+SKIP_BREW=0
+if [[ "${1:-}" == "--skip-brew" ]]; then
+    SKIP_BREW=1
+    shift
+fi
+
+# If invoked via sudo, re-run as the original user.
+# Homebrew refuses to run as root, and we want dotfiles to land in the user's home.
+if [[ "${DOTFILES_FROM_SUDO:-}" != "1" && "${EUID:-$(id -u)}" -eq 0 ]]; then
+    if [[ -z "${SUDO_USER:-}" || "${SUDO_USER}" == "root" ]]; then
+        echo "error: do not run as root; run as your normal user" >&2
+        exit 1
+    fi
+    exec sudo -u "${SUDO_USER}" -H DOTFILES_FROM_SUDO=1 bash "$0" "$@"
+fi
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
@@ -77,6 +113,40 @@ backup_and_link() {
     ln -s "$src" "$dest"
 }
 
+ensure_homebrew() {
+    if command -v brew >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if [[ -x "/opt/homebrew/bin/brew" ]]; then
+        export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+        return 0
+    fi
+
+    echo "Homebrew not found. Installing..."
+    /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+}
+
+run_brew_bundle() {
+    ensure_homebrew
+
+    # Ensure brew is on PATH in this non-login shell
+    if [[ -x "/opt/homebrew/bin/brew" ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+
+    if [[ ! -f "$DOTFILES_DIR/Brewfile" ]]; then
+        echo "warning: Brewfile not found at $DOTFILES_DIR/Brewfile" >&2
+        return 0
+    fi
+
+    echo ""
+    echo "Installing brew dependencies from Brewfile..."
+    brew tap homebrew/bundle >/dev/null 2>&1 || true
+    brew bundle --file "$DOTFILES_DIR/Brewfile"
+}
+
 echo "Installing dotfiles from $DOTFILES_DIR"
 echo ""
 
@@ -88,6 +158,18 @@ for entry in "${FILES[@]}"; do
     dest="${entry##*|}"
     backup_and_link "$src" "$dest"
 done
+
+if [[ "$SKIP_BREW" -eq 0 ]]; then
+    run_brew_bundle
+
+    # Install OpenCode plugin deps (requires bun).
+    if [[ -x "$HOME/.local/bin/setup-opencode" ]]; then
+        "$HOME/.local/bin/setup-opencode" || true
+    fi
+else
+    echo ""
+    echo "Skipping Homebrew bootstrap (--skip-brew)"
+fi
 
 echo ""
 echo "Done! Backups saved to: $BACKUP_DIR"

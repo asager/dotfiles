@@ -37,10 +37,11 @@ cd ~/dotfiles
 The install script will:
 1. Back up any existing dotfiles to `~/.dotfiles_backup/<timestamp>/`
 2. Create symlinks from your home directory to this repo
+3. Install CLI+GUI tooling via `brew bundle` (unless `--skip-brew`)
 
 ## Post-install
 
-- Install core brew deps (optional): `brew bundle --file ~/dotfiles/Brewfile`
+- Install core brew deps (automatic by default): `brew bundle --file ~/dotfiles/Brewfile`
 - Clone your core repos (optional): `bootstrap-repos`
 - Install OpenCode plugin deps: `setup-opencode`
 - (Re)deploy Everything MenuBarHelper: `deploy-menubarhelper`
