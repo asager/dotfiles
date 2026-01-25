@@ -1,7 +1,9 @@
 tap "homebrew/bundle"
+tap "homebrew/core"
 tap "homebrew/cask"
+tap "oven-sh/bun"
 
-brew "bun"
+brew "oven-sh/bun/bun"
 brew "gh"
 brew "git"
 brew "jq"
