@@ -7,7 +7,7 @@ set -e
 
 usage() {
     cat <<'EOF'
-usage: ./install.sh [--skip-brew] [--skip-launchagents] [--skip-app-defaults]
+usage: ./install.sh [--skip-brew] [--skip-launchagents] [--skip-app-defaults] [--skip-macos-defaults]
 
 Creates symlinks into your home directory.
 
@@ -18,6 +18,7 @@ Options:
   --skip-brew   Skip Homebrew bootstrap + Brewfile install
   --skip-launchagents  Skip loading LaunchAgents after install
   --skip-app-defaults  Skip importing app defaults (e.g. Rectangle)
+  --skip-macos-defaults  Skip applying macOS system defaults
 EOF
 }
 
@@ -29,6 +30,7 @@ fi
 SKIP_BREW=0
 SKIP_LAUNCHAGENTS=0
 SKIP_APP_DEFAULTS=0
+SKIP_MACOS_DEFAULTS=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-brew)
@@ -41,6 +43,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-app-defaults)
             SKIP_APP_DEFAULTS=1
+            shift
+            ;;
+        --skip-macos-defaults)
+            SKIP_MACOS_DEFAULTS=1
             shift
             ;;
         *)
@@ -76,6 +82,7 @@ FILES=(
     "tools/deploy_menubarhelper.sh|.local/bin/deploy-menubarhelper"
     "tools/setup_opencode.sh|.local/bin/setup-opencode"
     "tools/bootstrap_repos.sh|.local/bin/bootstrap-repos"
+    "tools/apply_macos_defaults.sh|.local/bin/apply-macos-defaults"
     "tools/azure_ocr.py|bin/azure_ocr"
     "config/claude/statusline.sh|.claude/statusline.sh"
     "config/claude/CLAUDE.md|.claude/CLAUDE.md"
@@ -250,6 +257,24 @@ apply_app_defaults() {
 }
 
 apply_app_defaults
+
+apply_macos_defaults() {
+    if [[ "$SKIP_MACOS_DEFAULTS" -eq 1 ]]; then
+        echo ""
+        echo "Skipping macOS defaults (--skip-macos-defaults)"
+        return 0
+    fi
+
+    local script="$DOTFILES_DIR/tools/apply_macos_defaults.sh"
+    if [[ ! -x "$script" ]]; then
+        return 0
+    fi
+
+    echo ""
+    "$script" || true
+}
+
+apply_macos_defaults
 
 echo ""
 echo "Done! Backups saved to: $BACKUP_DIR"
