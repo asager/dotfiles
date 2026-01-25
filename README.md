@@ -39,6 +39,7 @@ The install script will:
 2. Create symlinks from your home directory to this repo
 3. Install CLI+GUI tooling via `brew bundle` (unless `--skip-brew`)
 4. Load common LaunchAgents (unless `--skip-launchagents`)
+5. Import app defaults (unless `--skip-app-defaults`)
 
 ## Post-install
 

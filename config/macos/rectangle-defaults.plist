@@ -1,0 +1,25 @@
+{
+    "NSWindow Frame SUUpdateAlert" = "1194 951 620 398 0 0 3008 1667 ";
+    SUEnableAutomaticChecks = 0;
+    SUHasLaunchedBefore = 1;
+    SULastCheckTime = "2025-10-31 05:16:10 +0000";
+    alternateDefaultShortcuts = 1;
+    centerHalf =     {
+    };
+    cycleSizesIsChanged = 1;
+    gapSize = 0;
+    internalTilingNotified = 1;
+    lastVersion = 97;
+    launchOnLogin = 1;
+    moveCursorAcrossDisplays = 1;
+    reflowTodo =     {
+        keyCode = 45;
+        modifierFlags = 786432;
+    };
+    selectedCycleSizes = 31;
+    subsequentExecutionMode = 0;
+    toggleTodo =     {
+        keyCode = 11;
+        modifierFlags = 786432;
+    };
+}

@@ -7,7 +7,7 @@ set -e
 
 usage() {
     cat <<'EOF'
-usage: ./install.sh [--skip-brew] [--skip-launchagents]
+usage: ./install.sh [--skip-brew] [--skip-launchagents] [--skip-app-defaults]
 
 Creates symlinks into your home directory.
 
@@ -17,6 +17,7 @@ By default this also runs:
 Options:
   --skip-brew   Skip Homebrew bootstrap + Brewfile install
   --skip-launchagents  Skip loading LaunchAgents after install
+  --skip-app-defaults  Skip importing app defaults (e.g. Rectangle)
 EOF
 }
 
@@ -27,6 +28,7 @@ fi
 
 SKIP_BREW=0
 SKIP_LAUNCHAGENTS=0
+SKIP_APP_DEFAULTS=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip-brew)
@@ -35,6 +37,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-launchagents)
             SKIP_LAUNCHAGENTS=1
+            shift
+            ;;
+        --skip-app-defaults)
+            SKIP_APP_DEFAULTS=1
             shift
             ;;
         *)
@@ -215,6 +221,29 @@ else
 fi
 
 autoload_launchagents
+
+apply_app_defaults() {
+    if [[ "$SKIP_APP_DEFAULTS" -eq 1 ]]; then
+        echo ""
+        echo "Skipping app defaults import (--skip-app-defaults)"
+        return 0
+    fi
+
+    local rectangle_plist="$DOTFILES_DIR/config/macos/rectangle-defaults.plist"
+    if [[ ! -f "$rectangle_plist" ]]; then
+        return 0
+    fi
+
+    echo ""
+    echo "Importing app defaults..."
+
+    # Rectangle
+    defaults import com.knollsoft.Rectangle "$rectangle_plist" 2>/dev/null || true
+    killall Rectangle 2>/dev/null || true
+    open -ga "$HOME/Applications/Rectangle.app" 2>/dev/null || true
+}
+
+apply_app_defaults
 
 echo ""
 echo "Done! Backups saved to: $BACKUP_DIR"
